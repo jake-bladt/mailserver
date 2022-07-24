@@ -13,10 +13,47 @@ provider "aws" {
   region  = "us-west-2"
 }
 
-resource "aws_instance" "app_server" {
-  ami           = "ami-830c94e3"
-  instance_type = "t2.micro"
-  key_name      = "us-west-2-mail.pem"
+data "aws_ami" "ubuntu-latest" {
+    most_recent = true
+
+    filter {
+        name   = "name"
+        values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
+    }
+
+    filter {
+        name   = "virtualization-type"
+        values = ["hvm"]
+    }
+
+    owners = ["099720109477"] # Canonical
+}
+
+resource "aws_security_group" "mail_server_sg" {
+
+  name = "mail server rules"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
+resource "aws_instance" "mail_server" {
+  ami                    = "${data.aws_ami.ubuntu-latest.id}"
+  instance_type          = "t2.micro"
+  key_name               = "us-west-2-mail"
+  vpc_security_group_ids = ["${aws_security_group.mail_server_sg.id}"]
 
   tags = {
     Name = "mail server"
