@@ -13,7 +13,7 @@ provider "aws" {
   region  = "us-west-2"
 }
 
-data "aws_ami" "ubuntu-latest" {
+data "aws_ami" "ubuntu_latest" {
     most_recent = true
 
     filter {
@@ -50,10 +50,12 @@ resource "aws_security_group" "mail_server_sg" {
 }
 
 resource "aws_instance" "mail_server" {
-  ami                    = "${data.aws_ami.ubuntu-latest.id}"
-  instance_type          = "t2.micro"
-  key_name               = "us-west-2-mail"
-  vpc_security_group_ids = ["${aws_security_group.mail_server_sg.id}"]
+  ami                         = "${data.aws_ami.ubuntu_latest.id}"
+  instance_type               = "t2.micro"
+  key_name                    = "us-west-2-mail"
+  vpc_security_group_ids      = ["${aws_security_group.mail_server_sg.id}"]
+  user_data                   = "${file("install_server.sh")}"
+  user_data_replace_on_change = true
 
   tags = {
     Name = "mail server"
